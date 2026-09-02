@@ -36,9 +36,11 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    powershell '''
-                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
-                        docker push mewtros/flask-app:latest
+                    bat '''
+                        @echo off
+                        set "DOCKER_CONFIG=%WORKSPACE%\\.docker-jenkins"
+                        (set /p "=%DOCKER_PASS%") < nul | docker --config "%DOCKER_CONFIG%" login -u %DOCKER_USER% --password-stdin
+                        docker --config "%DOCKER_CONFIG%" push mewtros/flask-app:latest
                     '''
                 }
             }
