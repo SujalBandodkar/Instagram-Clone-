@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="story-viewer">
+    <div class="story-card">
+        <div class="story-header">
+            {% if story.story_author.profile_picture %}
+                <img class="story-avatar" src="{{ url_for('static', filename='uploads/' + story.story_author.profile_picture) }}">
+            {% else %}
+                <div class="story-avatar" style="background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">{{ story.story_author.username[0]|upper }}</div>
+            {% endif %}
+            <span class="story-author-name">{{ story.story_author.username }}</span>
+            <span class="story-time">{{ story.created_at.strftime('%I:%M %p') }}</span>
+            <div class="story-header-actions">
+                {% if story.user_id == current_user_id %}
+                    <form method="POST" action="{{ url_for('controller.delete_story', story_id=story.id) }}" class="story-delete-form">
+                        <button type="submit" class="story-delete-btn" title="Delete story">🗑</button>
+                    </form>
+                {% endif %}
+                <a class="story-close" href="{{ url_for('controller.home') }}">×</a>
+            </div>
+        </div>
+        <img class="story-image" src="{{ url_for('static', filename='uploads/' + story.image) }}">
+        {% if story.caption %}
+            <div class="story-caption">{{ story.caption }}</div>
+        {% endif %}
+        <div class="story-views">{{ story.views|length }} views</div>
+        {% if user_stories|length > 1 %}
+            {% if story_index > 0 %}
+            <a class="story-arrow story-arrow-left" href="{{ url_for('controller.view_story', story_id=user_stories[story_index - 1].id) }}">‹</a>
+            {% endif %}
+            {% if story_index < user_stories|length - 1 %}
+            <a class="story-arrow story-arrow-right" href="{{ url_for('controller.view_story', story_id=user_stories[story_index + 1].id) }}">›</a>
+            {% endif %}
+        {% endif %}
+    </div>
+</body>
+</html>

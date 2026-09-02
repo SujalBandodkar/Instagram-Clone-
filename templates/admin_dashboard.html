@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Instagram{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h1 class="admin-title">Admin Dashboard</h1>
+    </div>
+    <div class="admin-stats">
+        <div class="admin-stat-card">
+            <div class="admin-stat-number">{{ users|length }}</div>
+            <div class="admin-stat-label">Users</div>
+        </div>
+        <div class="admin-stat-card">
+            <div class="admin-stat-number">{{ posts|length }}</div>
+            <div class="admin-stat-label">Posts</div>
+        </div>
+    </div>
+    <div class="admin-section">
+        <div class="admin-section-header">
+            <h2 class="admin-section-title">All Users</h2>
+            <input type="text" id="userSearch" class="admin-search" placeholder="Search users...">
+        </div>
+        <table class="admin-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role.name }}</td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '' }}</td>
+                    <td>
+                        {% if user.id != current_user_id %}
+                        <form method="POST" action="{{ url_for('controller.admin_delete_user', user_id=user.id) }}">
+                            <button class="btn-delete" type="submit">Delete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="admin-section">
+        <div class="admin-section-header">
+            <h2 class="admin-section-title">All Posts</h2>
+            <input type="text" id="postSearch" class="admin-search" placeholder="Search posts...">
+        </div>
+        <table class="admin-table" id="postsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Author</th>
+                    <th>Content</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>{{ post.id }}</td>
+                    <td>{{ post.post_author.username }}</td>
+                    <td>{{ post.content|truncate(50) if post.content else 'Image only' }}</td>
+                    <td>{{ post.created_at.strftime('%Y-%m-%d') if post.created_at else '' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('controller.admin_delete_post', post_id=post.id) }}">
+                            <button class="btn-delete" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function setupSearch(inputId, tableId) {
+    document.getElementById(inputId).addEventListener('input', function() {
+        var query = this.value.toLowerCase();
+        var rows = document.getElementById(tableId).querySelectorAll('tbody tr');
+        rows.forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+}
+setupSearch('userSearch', 'usersTable');
+setupSearch('postSearch', 'postsTable');
+</script>
+{% endblock %}

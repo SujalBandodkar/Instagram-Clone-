@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - Instagram{% endblock %}
+
+{% block content %}
+<div class="inbox-container">
+    <div class="inbox-header">
+        <h1 class="inbox-title">Messages</h1>
+    </div>
+    {% if chats %}
+        <div class="inbox-list">
+            {% for chat in chats %}
+                <a class="inbox-item" href="{{ url_for('controller.conversation', user_id=chat.other_user.id) }}">
+                    {% if chat.other_user.profile_picture %}
+                        <img class="inbox-avatar" src="{{ url_for('static', filename='uploads/' + chat.other_user.profile_picture) }}">
+                    {% else %}
+                        <div class="inbox-avatar-placeholder">{{ chat.other_user.username[0]|upper }}</div>
+                    {% endif %}
+                    <div class="inbox-info">
+                        <div class="inbox-name">{{ chat.other_user.username }}</div>
+                        <div class="inbox-preview">
+                            {% if chat.last_message %}
+                                {{ chat.last_message.content|truncate(40) }}
+                            {% else %}
+                                No messages yet
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">No conversations yet</div>
+    {% endif %}
+</div>
+{% endblock %}

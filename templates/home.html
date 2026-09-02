@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Home - Instagram{% endblock %}
+{% block content %}
+<div class="feed-container">
+    <div class="stories-bar">
+        <a href="{{ url_for('controller.create_story') }}" class="story-item">
+            <div class="story-add">+</div>
+            <span class="story-username">Your Story</span>
+        </a>
+        {% set seen_users = [] %}
+        {% for story in stories %}
+            {% if story.user_id not in seen_users %}
+                {% if seen_users.append(story.user_id) %}{% endif %}
+            <a href="{{ url_for('controller.view_story', story_id=story.id) }}" class="story-item">
+                <div class="story-ring">
+                    {% if story.story_author.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + story.story_author.profile_picture) }}" alt="Story">
+                    {% else %}
+                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #ccc;"></div>
+                    {% endif %}
+                </div>
+                <span class="story-username">{{ story.story_author.username }}</span>
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div id="post-feed">
+    {% if posts %}
+    {% for post in posts %}
+    <div class="post-card">
+        <div class="post-header">
+            {% if post.post_author.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + post.post_author.profile_picture) }}" class="post-avatar">
+            {% else %}
+            <div class="post-avatar-placeholder">{{ post.post_author.username[0]|upper }}</div>
+            {% endif %}
+            <a href="{{ url_for('controller.profile', user_id=post.post_author.id) }}" class="post-username">{{ post.post_author.username }}</a>
+            <span class="post-time">{{ post.created_at.strftime('%b %d') }}</span>
+        </div>
+        {% if post.image %}
+        <img src="{{ url_for('static', filename='uploads/' + post.image) }}" class="post-image">
+        {% endif %}
+        <div class="post-actions">
+            <form method="POST" action="{% if post.id in liked_post_ids %}{{ url_for('controller.unlike_post', post_id=post.id) }}{% else %}{{ url_for('controller.like_post', post_id=post.id) }}{% endif %}">
+                {% if post.id in liked_post_ids %}
+                <button type="submit" class="action-btn liked">
+                    <svg viewBox="0 0 24 24" fill="#ed4956" stroke="#ed4956" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                </button>
+                {% else %}
+                <button type="submit" class="action-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+                </button>
+                {% endif %}
+            </form>
+            <a href="{{ url_for('controller.view_post', post_id=post.id) }}" class="action-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+            </a>
+        </div>
+        <div class="post-likes">{{ post.likes|length }} likes</div>
+        {% if post.content %}
+        <div class="post-content">
+            <a href="{{ url_for('controller.profile', user_id=post.post_author.id) }}" class="content-username">{{ post.post_author.username }}</a>
+            {{ post.content }}
+        </div>
+        {% endif %}
+        {% if post.comments|length > 0 %}
+        <div class="post-comments-link">
+            <a href="{{ url_for('controller.view_post', post_id=post.id) }}">View all {{ post.comments|length }} comments</a>
+        </div>
+        {% endif %}
+        <div class="post-date">{{ post.created_at.strftime('%B %d, %Y') }}</div>
+        <form method="POST" action="{{ url_for('controller.add_comment', post_id=post.id) }}" class="post-comment-form">
+            <input type="text" name="content" placeholder="Add a comment..." required>
+            <button type="submit">Post</button>
+        </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state" style="text-align: center; padding: 40px; color: var(--text-light);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin-bottom: 16px;"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <p>No Posts Yet</p>
+    </div>
+    {% endif %}
+    </div>
+
+    <div id="loading-spinner" class="loading-spinner" style="display:none;">
+        <div class="spinner"></div>
+    </div>
+    <div id="scroll-sentinel"></div>
+</div>
+
+<script>
+let currentPage = 2;
+const seed = {{ seed }};
+let loading = false;
+let noMore = false;
+
+function createPostCard(p) {
+    const likedSvg = '<svg viewBox="0 0 24 24" fill="#ed4956" stroke="#ed4956" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
+    const unlikedSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>';
+    const commentSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>';
+    const heartClass = p.is_liked ? ' liked' : '';
+    const heartFill = p.is_liked ? '#ed4956' : 'none';
+    const heartStroke = p.is_liked ? '#ed4956' : 'currentColor';
+    const heartSvg = p.is_liked ? likedSvg : unlikedSvg;
+    const likeAction = p.is_liked ? '/posts/' + p.id + '/unlike' : '/posts/' + p.id + '/like';
+
+    let html = '<div class="post-card">';
+    html += '<div class="post-header">';
+    if (p.author.profile_picture) {
+        html += '<img src="' + p.author.profile_picture + '" class="post-avatar">';
+    } else {
+        html += '<div class="post-avatar-placeholder">' + p.author.username[0].toUpperCase() + '</div>';
+    }
+    html += '<a href="/profile/' + p.author.id + '" class="post-username">' + p.author.username + '</a>';
+    html += '<span class="post-time">' + p.created_at + '</span>';
+    html += '</div>';
+    if (p.image) {
+        html += '<img src="' + p.image + '" class="post-image">';
+    }
+    html += '<div class="post-actions">';
+    html += '<form method="POST" action="' + likeAction + '">';
+    html += '<button type="submit" class="action-btn' + heartClass + '">' + heartSvg + '</button>';
+    html += '</form>';
+    html += '<a href="/posts/' + p.id + '" class="action-btn">' + commentSvg + '</a>';
+    html += '</div>';
+    html += '<div class="post-likes">' + p.likes_count + ' likes</div>';
+    if (p.content) {
+        html += '<div class="post-content"><a href="/profile/' + p.author.id + '" class="content-username">' + p.author.username + '</a> ' + p.content + '</div>';
+    }
+    if (p.comments_count > 0) {
+        html += '<div class="post-comments-link"><a href="/posts/' + p.id + '">View all ' + p.comments_count + ' comments</a></div>';
+    }
+    html += '<div class="post-date">' + p.created_at + '</div>';
+    html += '<form method="POST" action="/posts/' + p.id + '/comments" class="post-comment-form">';
+    html += '<input type="text" name="content" placeholder="Add a comment..." required>';
+    html += '<button type="submit">Post</button>';
+    html += '</form>';
+    html += '</div>';
+    return html;
+}
+
+function loadPosts() {
+    if (loading || noMore) return;
+    loading = true;
+    document.getElementById('loading-spinner').style.display = 'flex';
+
+    setTimeout(function() {
+        fetch('/api/posts/page?page=' + currentPage + '&seed=' + seed)
+        .then(function(r) { return r.json(); })
+        .then(function(posts) {
+            if (posts.length === 0) {
+                noMore = true;
+                document.getElementById('loading-spinner').style.display = 'none';
+                return;
+            }
+            const feed = document.getElementById('post-feed');
+            posts.forEach(function(p) {
+                feed.insertAdjacentHTML('beforeend', createPostCard(p));
+            });
+            currentPage++;
+            loading = false;
+            document.getElementById('loading-spinner').style.display = 'none';
+        });
+    }, 1500);
+}
+
+const observer = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) loadPosts();
+}, { threshold: 0.1 });
+observer.observe(document.getElementById('scroll-sentinel'));
+</script>
+{% endblock %}

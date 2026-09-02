@@ -1,0 +1,6 @@
+/tables.sql
+/all_in_one_for_understanding.py
+/.venv/
+/.pytest_cache/
+*.pyc
+*.env

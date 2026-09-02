@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ list_type|capitalize }} of {{ user.username }} - Instagram{% endblock %}
+{% block content %}
+<div class="follow-list-container">
+    <div class="follow-list-header">
+        <a href="{{ url_for('controller.profile', user_id=user.id) }}" class="follow-list-back">&larr;</a>
+        <h2 class="follow-list-title">{{ user.username }}'s {{ list_type }}</h2>
+    </div>
+    <div class="follow-list">
+        {% for u in users %}
+        <a href="{{ url_for('controller.profile', user_id=u.id) }}" class="follow-list-item">
+            {% if u.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/' + u.profile_picture) }}" class="follow-list-avatar">
+            {% else %}
+            <div class="follow-list-avatar-placeholder">{{ u.username[0] | upper }}</div>
+            {% endif %}
+            <div class="follow-list-info">
+                <span class="follow-list-username">{{ u.username }}</span>
+                {% if u.bio %}
+                <span class="follow-list-bio">{{ u.bio | truncate(60) }}</span>
+                {% endif %}
+            </div>
+        </a>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-title">No {{ list_type }} yet.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Instagram{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='css/Instagram_icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('controller.home') }}" class="nav-logo">Instagram</a>
+            <form class="nav-search" action="{{ url_for('controller.search') }}" method="GET">
+                <input type="text" name="q" placeholder="Search">
+            </form>
+            <div class="nav-icons">
+                <a href="{{ url_for('controller.home') }}" class="nav-icon" title="Home">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9M5 10v10h14V10"/><path d="M9 21v-6h6v6"/></svg>
+                </a>
+                <a href="{{ url_for('controller.search') }}" class="nav-icon" title="Search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                </a>
+                <a href="{{ url_for('controller.create_post') }}" class="nav-icon" title="Create">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+                </a>
+                <a href="{{ url_for('controller.inbox') }}" class="nav-icon" title="Messages">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                </a>
+                {% if current_role == 'admin' %}
+                <a href="{{ url_for('controller.admin_dashboard') }}" class="nav-icon" title="Admin">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('controller.profile', user_id=current_user_id) }}" class="nav-icon" title="Profile">
+                    {% if current_user and current_user.profile_picture %}
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.profile_picture) }}" class="nav-profile-pic">
+                    {% else %}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

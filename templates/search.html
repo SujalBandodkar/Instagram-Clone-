@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Instagram{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <form class="search-box" method="GET" action="{{ url_for('controller.search') }}">
+        <input class="search-input" type="text" name="q" value="{{ query }}" placeholder="Search users and posts...">
+    </form>
+    {% if query %}
+        <div class="search-section">
+            <h3 class="search-section-title">Users</h3>
+            {% if users %}
+                {% for user in users %}
+                    <a class="search-user-item" href="{{ url_for('controller.profile', user_id=user.id) }}">
+                        {% if user.profile_picture %}
+                            <img class="search-user-avatar" src="{{ url_for('static', filename='uploads/' + user.profile_picture) }}">
+                        {% else %}
+                            <div class="search-user-avatar" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); color: white; font-weight: 600;">
+                                {{ user.username[0]|upper }}
+                            </div>
+                        {% endif %}
+                        <div>
+                            <div class="search-user-name">{{ user.username }}</div>
+                            {% if user.bio %}
+                            <div class="search-user-bio">{{ user.bio|truncate(50) }}</div>
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No users found</div>
+            {% endif %}
+        </div>
+        <div class="search-section">
+            <h3 class="search-section-title">Posts</h3>
+            {% if posts %}
+                {% for post in posts %}
+                    <a class="search-post-item" href="{{ url_for('controller.view_post', post_id=post.id) }}">
+                        <div class="search-post-author">{{ post.post_author.username }}</div>
+                        <div class="search-post-text">{{ post.content|truncate(100) }}</div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">No posts found</div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="empty-state">Search for users and posts</div>
+    {% endif %}
+</div>
+{% endblock %}

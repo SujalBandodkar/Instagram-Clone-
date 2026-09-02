@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ other_user.username }} - Instagram{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-header">
+        <a class="chat-back" href="{{ url_for('controller.inbox') }}">←</a>
+        {% if other_user.profile_picture %}
+            <img class="chat-avatar" src="{{ url_for('static', filename='uploads/' + other_user.profile_picture) }}">
+        {% else %}
+            <div class="chat-avatar" style="background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">{{ other_user.username[0]|upper }}</div>
+        {% endif %}
+        <a class="chat-name" href="{{ url_for('controller.profile', user_id=other_user.id) }}">{{ other_user.username }}</a>
+    </div>
+    <div class="chat-messages">
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.sender_id == current_user_id %}
+                    <div class="message-bubble message-sent">{{ message.content }}</div>
+                    <div class="message-time message-time-right">{{ message.sent_at.strftime('%I:%M %p') }}</div>
+                {% else %}
+                    <div class="message-bubble message-received">{{ message.content }}</div>
+                    <div class="message-time message-time-left">{{ message.sent_at.strftime('%I:%M %p') }}</div>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">Start a conversation</div>
+        {% endif %}
+    </div>
+    <form class="chat-input" method="POST" action="{{ url_for('controller.conversation', user_id=other_user.id) }}">
+        <input type="text" name="content" placeholder="Message..." required>
+        <button type="submit">Send</button>
+    </form>
+</div>
+{% endblock %}
