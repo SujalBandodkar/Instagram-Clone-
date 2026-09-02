@@ -3,42 +3,42 @@ pipeline {
 
     stages {
 
-        stage('Checkout'){
-            steps{
+        stage('Checkout') {
+            steps {
                 checkout scm
             }
         }
 
-        stage('Install Dependencies'){
-            steps{
+        stage('Install Dependencies') {
+            steps {
                 sh 'pip install -r requirements.txt'
             }
         }
 
-        stage('Test'){
+        stage('Test') {
             steps {
                 sh 'pytest'
             }
         }
 
-        stage('Build Docker Image'){
-            steps{
-                sh 'docker build -t MEWTROS/flask-app:latest'
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t mewtros/flask-app:latest .'
             }
         }
 
-        stage('Push to Docker Hub'){
-            steps{
+        stage('Push to Docker Hub') {
+            steps {
                 withCredentials([
                     usernamePassword(
                         credentialsId: 'dockerhub-credentials',
-                        usernameVriable: 'DOCKER_USER',
+                        usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
-                ]){
+                ]) {
                     sh '''
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push MEWTROS/flask-app:latest
+                        docker push mewtros/flask-app:latest
                     '''
                 }
             }
