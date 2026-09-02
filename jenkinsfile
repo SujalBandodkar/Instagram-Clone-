@@ -23,7 +23,13 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat 'docker build -t mewtros/flask-app:latest .'
+                bat '''
+                    @echo off
+                    set "DOCKER_CONFIG=%WORKSPACE%\\.docker-jenkins"
+                    if not exist "%DOCKER_CONFIG%" mkdir "%DOCKER_CONFIG%"
+                    echo {} > "%DOCKER_CONFIG%\\config.json"
+                    docker --config "%DOCKER_CONFIG%" build -t mewtros/flask-app:latest .
+                '''
             }
         }
 
@@ -44,6 +50,15 @@ pipeline {
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            bat '''
+                @echo off
+                if exist "%WORKSPACE%\\.docker-jenkins" rmdir /s /q "%WORKSPACE%\\.docker-jenkins"
+            '''
         }
     }
 }
